@@ -24,9 +24,10 @@ fn main() {
         score.append(timestamp, keypresses);
 
         println!(
-            "{} {:9.0}; {:3}; total work {}; {}; LoR {}",
+            "{} {:9.0}; {:5}; {:3}; total work {}; rest {}; LoR {}",
             time_of_day_str(timestamp as i64 * 5),
             score.current_score(),
+            score.total_keypresses(),
             keypresses,
             duration_str(score.total_work()),
             duration_str(score.needed_recovery()),

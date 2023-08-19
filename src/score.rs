@@ -1,6 +1,7 @@
 use chrono::{self, TimeZone};
 
 const SLICE_SIZE: u32 = 5;
+const REST_TO_WORK_RATIO: u32 = 4;
 
 const LACK_OF_RECOVERY_INTERVAL_PENALTY: f32 = 0.1 / (60.0 * 60.0 / SLICE_SIZE as f32); // 0.1 per hour
 
@@ -62,9 +63,13 @@ impl Score {
         self.sum_keypresses += keypresses as u32;
 
         let missing_intervals = time_slice - self.previous_time_slice - 1;
-        if missing_intervals >= 3 {
-            // Do "self.recovery_debt -= 6 * missing_intervals;" but make sure self.recovery_debt doesn't go below 0
-            self.recovery_debt = self.recovery_debt.saturating_sub(6 * missing_intervals);
+        if missing_intervals >= 60 * 5 / SLICE_SIZE {
+            // Do "self.recovery_debt -= REST_TO_WORK_RATIO * missing_intervals;" but make sure self.recovery_debt doesn't go below 0
+            self.recovery_debt = self
+                .recovery_debt
+                .saturating_sub(REST_TO_WORK_RATIO * missing_intervals);
+        } else {
+            self.total_work_intervals += missing_intervals;
         }
 
         assert!(keypresses != 0);
@@ -89,12 +94,16 @@ impl Score {
             * 10.0
     }
 
+    pub fn total_keypresses(&self) -> u32 {
+        self.sum_keypresses
+    }
+
     pub fn total_work(&self) -> u32 {
         self.total_work_intervals * SLICE_SIZE
     }
 
     pub fn needed_recovery(&self) -> u32 {
-        self.recovery_debt / 6 * SLICE_SIZE
+        self.recovery_debt / REST_TO_WORK_RATIO * SLICE_SIZE
     }
 
     pub fn lack_of_recovery(&self) -> u32 {
