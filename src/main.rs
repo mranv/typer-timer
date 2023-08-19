@@ -24,14 +24,15 @@ fn main() {
         score.append(timestamp, keypresses);
 
         println!(
-            "{} {:9.0}; {:5}; {:3}; total work {}; rest {}; LoR {}",
+            "{} {:9.0}; {:5}; {:3}; total work {}; rest {}; LoR {}; last recovery {}",
             time_of_day_str(timestamp as i64 * 5),
             score.current_score(),
             score.total_keypresses(),
             keypresses,
             duration_str(score.total_work()),
             duration_str(score.needed_recovery()),
-            duration_str(score.lack_of_recovery())
+            duration_str(score.lack_of_recovery()),
+            duration_str(score.last_recovery_since()),
         );
     }
 }

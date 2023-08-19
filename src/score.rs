@@ -3,14 +3,14 @@ use chrono::{self, TimeZone};
 const SLICE_SIZE: u32 = 5;
 const REST_TO_WORK_RATIO: u32 = 4;
 
-const LACK_OF_RECOVERY_INTERVAL_PENALTY: f32 = 0.1 / (60.0 * 60.0 / SLICE_SIZE as f32); // 0.1 per hour
+const LACK_OF_RECOVERY_SLICE_PENALTY: f32 = 0.1 / (60.0 * 60.0 / SLICE_SIZE as f32); // 0.1 per hour
 
-fn duration_multiplier(intervals: u32) -> f32 {
-    if intervals <= 180 * 60 / SLICE_SIZE {
+fn duration_multiplier(slices: u32) -> f32 {
+    if slices <= 180 * 60 / SLICE_SIZE {
         2.0
-    } else if intervals <= 240 * 60 / SLICE_SIZE {
+    } else if slices <= 240 * 60 / SLICE_SIZE {
         1.5
-    } else if intervals <= 480 * 60 / SLICE_SIZE {
+    } else if slices <= 480 * 60 / SLICE_SIZE {
         1.0
     } else {
         // intervals <= 480 * 60 / INTERVAL_LEN_SECS
@@ -32,9 +32,10 @@ fn is_same_day(time_slice1: u32, time_slice2: u32) -> bool {
 pub struct Score {
     previous_time_slice: u32,
     sum_keypresses: u32,
-    total_work_intervals: u32,
+    total_work_slices: u32,
     recovery_debt: u32,
-    num_lack_of_recovery_cycles: u32,
+    num_lack_of_recovery_slices: u32,
+    last_recovery_slice: u32,
 }
 
 impl Score {
@@ -42,18 +43,20 @@ impl Score {
         Score {
             previous_time_slice: 0,
             sum_keypresses: 0,
-            total_work_intervals: 0,
+            total_work_slices: 0,
             recovery_debt: 0,
-            num_lack_of_recovery_cycles: 0,
+            num_lack_of_recovery_slices: 0,
+            last_recovery_slice: 0,
         }
     }
 
     fn reset(&mut self) {
         self.previous_time_slice = 0;
         self.sum_keypresses = 0;
-        self.total_work_intervals = 0;
+        self.total_work_slices = 0;
         self.recovery_debt = 0;
-        self.num_lack_of_recovery_cycles = 0;
+        self.num_lack_of_recovery_slices = 0;
+        self.last_recovery_slice = 0;
     }
 
     pub fn append(&mut self, time_slice: u32, keypresses: u8) {
@@ -62,35 +65,36 @@ impl Score {
         }
         self.sum_keypresses += keypresses as u32;
 
-        let missing_intervals = time_slice - self.previous_time_slice - 1;
-        if missing_intervals >= 60 * 5 / SLICE_SIZE {
+        let missing_slices = time_slice - self.previous_time_slice - 1;
+        if missing_slices >= 60 * 5 / SLICE_SIZE {
             // Do "self.recovery_debt -= REST_TO_WORK_RATIO * missing_intervals;" but make sure self.recovery_debt doesn't go below 0
             self.recovery_debt = self
                 .recovery_debt
-                .saturating_sub(REST_TO_WORK_RATIO * missing_intervals);
+                .saturating_sub(REST_TO_WORK_RATIO * missing_slices);
+            self.last_recovery_slice = time_slice;
         } else {
-            self.total_work_intervals += missing_intervals;
+            self.total_work_slices += missing_slices;
         }
 
         assert!(keypresses != 0);
-        self.total_work_intervals += 1;
+        self.total_work_slices += 1;
         self.recovery_debt += 1;
 
         if self.recovery_debt >= 60 * 60 / SLICE_SIZE {
             // 1 hour
-            self.num_lack_of_recovery_cycles += 1;
+            self.num_lack_of_recovery_slices += 1;
         }
         self.previous_time_slice = time_slice;
     }
 
     pub fn current_score(&self) -> f32 {
         let lack_of_recovery_factor =
-            1.0 - self.num_lack_of_recovery_cycles as f32 * LACK_OF_RECOVERY_INTERVAL_PENALTY;
+            1.0 - self.num_lack_of_recovery_slices as f32 * LACK_OF_RECOVERY_SLICE_PENALTY;
         // self.sum_keypresses / (30 * FORCE_FACTOR * POSTURE_FACTOR * ADDITIONAL_FACTORS * REPETITIVENESS_MULTIPLIER * (duration_interval_mins * lack_of_recovery_factor * duration_multiplier(duration_interval_mins)))
         self.sum_keypresses as f32
-            / (self.total_work_intervals as f32
+            / (self.total_work_slices as f32
                 * lack_of_recovery_factor
-                * duration_multiplier(self.total_work_intervals))
+                * duration_multiplier(self.total_work_slices))
             * 10.0
     }
 
@@ -99,7 +103,11 @@ impl Score {
     }
 
     pub fn total_work(&self) -> u32 {
-        self.total_work_intervals * SLICE_SIZE
+        self.total_work_slices * SLICE_SIZE
+    }
+
+    pub fn last_recovery_since(&self) -> u32 {
+        (self.previous_time_slice - self.last_recovery_slice) * SLICE_SIZE
     }
 
     pub fn needed_recovery(&self) -> u32 {
@@ -107,6 +115,6 @@ impl Score {
     }
 
     pub fn lack_of_recovery(&self) -> u32 {
-        self.num_lack_of_recovery_cycles * SLICE_SIZE
+        self.num_lack_of_recovery_slices * SLICE_SIZE
     }
 }
