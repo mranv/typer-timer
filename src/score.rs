@@ -1,7 +1,7 @@
 use chrono::{self, TimeZone};
 use std::collections::VecDeque;
 
-const SLICE_SIZE: u32 = 5;
+pub const SLICE_SIZE: u32 = 5;
 const REST_TO_WORK_RATIO: u32 = 4;
 
 const LACK_OF_RECOVERY_SLICE_PENALTY: f32 = 0.1 / (60.0 * 60.0 / SLICE_SIZE as f32); // 0.1 per hour
