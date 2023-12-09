@@ -1,0 +1,10 @@
+{
+    "name": "Repeto",
+    "description": "Hello World",
+    "shell-version": [
+        "43"
+    ],
+    "url": "",
+    "uuid": "repeto@hadar.gr",
+    "version": 1.0
+}
