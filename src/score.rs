@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use chrono::{self, TimeZone};
 use std::collections::VecDeque;
 
@@ -77,7 +79,7 @@ impl Score {
     pub fn append(&mut self, time_slice: u32, keypresses: u8) {
         let mut hour_slice = (time_slice, 0, 0);
         if keypresses == 0 {
-            println!(
+            log::warn!(
                 "Warning: keypresses == 0 at {}",
                 chrono::Local
                     .timestamp_opt(time_slice as i64 * SLICE_SIZE as i64, 0)
@@ -87,7 +89,7 @@ impl Score {
             return;
         }
         if !is_same_day(self.previous_time_slice, time_slice) {
-            println!("New day");
+            log::info!("New day");
             self.reset();
             self.last_recovery_slice = time_slice;
             self.previous_time_slice = time_slice;

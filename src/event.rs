@@ -3,7 +3,7 @@ use crate::score;
 use std::fs;
 use std::io::{ErrorKind, Read, Seek, Write};
 use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
+use std::path::PathBuf;
 
 use chrono::TimeZone;
 
@@ -14,31 +14,32 @@ fn duration_str(secs: u32) -> String {
     format!("{:2}h {:2}m", hours, mins)
 }
 
-pub struct Stream<'a> {
-    stream_path: &'a Path,
+pub struct Stream {
     stream_file: std::fs::File,
     stream_valid_pos: u64,
     banner_file: std::fs::File,
     score: score::Score,
 }
 
-impl Stream<'_> {
-    pub fn new(file_name: &Path) -> Stream {
+impl Stream {
+    pub fn new(file_name: PathBuf) -> Stream {
         let banner_folder = "/tmp/repeto";
         if let Err(_) = fs::metadata(banner_folder) {
             let permissions = fs::Permissions::from_mode(0o700);
             fs::create_dir(banner_folder).unwrap();
             fs::set_permissions(banner_folder, permissions).unwrap();
         }
+        let file = std::fs::OpenOptions::new()
+            .create(true)
+            .read(true)
+            .write(true)
+            .open(file_name.as_path())
+            .unwrap();
+
+        log::info!("Opened {} for tracking activity", file_name.display());
 
         Stream {
-            stream_path: file_name,
-            stream_file: std::fs::OpenOptions::new()
-                .create(true)
-                .read(true)
-                .write(true)
-                .open(file_name)
-                .unwrap(),
+            stream_file: file,
             stream_valid_pos: 0,
             banner_file: std::fs::File::create("/tmp/repeto/banner").unwrap(),
             score: score::Score::new(),
@@ -67,7 +68,6 @@ impl Stream<'_> {
                     self.stream_valid_pos += 5;
                 }
                 Err(error) if error.kind() == ErrorKind::UnexpectedEof => {
-                    log::info!("got error: {:?}", error);
                     break;
                 }
                 Err(error) => {
@@ -77,31 +77,17 @@ impl Stream<'_> {
         }
 
         log::info!(
-            "Replayed all events in {} until position {} (end of file)",
-            self.stream_path.display(),
+            "Replayed all events until file position {} (end of file)",
             self.stream_valid_pos
         );
 
-        log::debug!(
-            "File pos: {:?}",
-            self.stream_file
-                .seek(std::io::SeekFrom::Current(0))
-                .unwrap()
-        );
-
-        // Go back to the last valid position. New appends will overwrite the corrupted bytes
+        // Go back to the last valid position. New appends will overwrite any corrupted bytes
         self.stream_file
             .seek(std::io::SeekFrom::Start(self.stream_valid_pos))
             .unwrap();
     }
 
     pub fn append(&mut self, timestamp: u32, keypresses: u8) {
-        log::debug!(
-            "current pos: {:?}",
-            self.stream_file
-                .seek(std::io::SeekFrom::Current(0))
-                .unwrap()
-        );
         let mut buffer = [0; 5];
         buffer[0..4].copy_from_slice(&timestamp.to_be_bytes());
         buffer[4] = keypresses;
@@ -113,10 +99,9 @@ impl Stream<'_> {
         self.banner_file.seek(std::io::SeekFrom::Start(0)).unwrap();
         write!(
             self.banner_file,
-            "{:2.0}% μ/d — {:2.0}% μ/h — {} 🔨",
-            self.score.micro_pause_share() * 100.0,
-            self.score.micro_pause_share_past_hour() * 100.0,
+            "{} / {} 🔨",
             duration_str(self.score.last_recovery_since()),
+            duration_str(self.score.total_work())
         )
         .unwrap();
     }
