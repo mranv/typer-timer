@@ -2,7 +2,9 @@
     "name": "Repeto",
     "description": "Hello World",
     "shell-version": [
-        "43"
+        "43",
+        "44",
+        "45"
     ],
     "url": "",
     "uuid": "repeto@hadar.gr",
