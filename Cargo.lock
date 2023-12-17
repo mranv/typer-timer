@@ -452,17 +452,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08c74e62047bb2de4ff487b251e4a92e24f48745648451635cec7d591162d9f"
 
 [[package]]
-name = "repeto"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "directories",
- "env_logger",
- "log",
- "rdev",
-]
-
-[[package]]
 name = "rustix"
 version = "0.38.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -524,6 +513,17 @@ dependencies = [
  "libc",
  "wasi 0.10.0+wasi-snapshot-preview1",
  "winapi",
+]
+
+[[package]]
+name = "typer-timer"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "directories",
+ "env_logger",
+ "log",
+ "rdev",
 ]
 
 [[package]]

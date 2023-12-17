@@ -23,7 +23,7 @@ pub struct Stream {
 
 impl Stream {
     pub fn new(file_name: PathBuf) -> Stream {
-        let banner_folder = "/tmp/repeto";
+        let banner_folder = "/tmp/typer-timer";
         if let Err(_) = fs::metadata(banner_folder) {
             let permissions = fs::Permissions::from_mode(0o700);
             fs::create_dir(banner_folder).unwrap();
@@ -41,7 +41,7 @@ impl Stream {
         Stream {
             stream_file: file,
             stream_valid_pos: 0,
-            banner_file: std::fs::File::create("/tmp/repeto/banner").unwrap(),
+            banner_file: std::fs::File::create("/tmp/typer-timer/banner").unwrap(),
             score: score::Score::new(),
         }
     }

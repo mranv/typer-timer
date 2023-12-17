@@ -1,12 +1,12 @@
 {
-    "name": "Repeto",
-    "description": "Hello World",
+    "name": "Typer-Timer",
+    "description": "Clock Your Keyboard Usage",
     "shell-version": [
         "43",
         "44",
         "45"
     ],
     "url": "",
-    "uuid": "repeto@hadar.gr",
+    "uuid": "typer-timer@hadar.gr",
     "version": 1.0
 }

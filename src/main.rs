@@ -9,7 +9,7 @@ use std::{path::PathBuf, process::ExitCode};
 use crate::event::Stream;
 
 fn stream_logfile() -> Result<PathBuf, Box<dyn std::error::Error>> {
-    match ProjectDirs::from("gr", "Hadar", "repeto") {
+    match ProjectDirs::from("gr", "Hadar", "Typer-Timer") {
         Some(proj_dirs) => match proj_dirs.state_dir() {
             Some(dir) => {
                 std::fs::create_dir_all(dir)?;

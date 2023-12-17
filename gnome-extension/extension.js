@@ -22,7 +22,7 @@ function init() {
         
     // Read and update the text every second
     GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 5, () => {
-        let [success, contents] = GLib.file_get_contents("/tmp/repeto/banner");
+        let [success, contents] = GLib.file_get_contents("/tmp/typer-timer/banner");
         contents_str = decoder.decode(contents)
         if (success) {
             panelButtonText.set_text(contents_str);
