@@ -2,8 +2,6 @@
     "name": "Typer-Timer",
     "description": "Clock Your Keyboard Usage",
     "shell-version": [
-        "43",
-        "44",
         "45"
     ],
     "url": "",
